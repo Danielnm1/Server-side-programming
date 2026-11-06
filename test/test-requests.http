@@ -1,0 +1,51 @@
+@apiUrl = http://127.0.0.1:3000/api/v1
+
+### 1. Get all cats
+GET {{apiUrl}}/cats
+
+### 2. Get cat by ID
+GET {{apiUrl}}/cats/8
+
+### 3. Add a new cat
+POST {{apiUrl}}/cats
+Content-Type: application/json
+
+{
+  "cat_name": "Garfield",
+  "weight": 12,
+  "owner": "Jhon",
+  "filename": "garfield.jpg",
+  "birthdate": "2020-06-19"
+}
+
+### 4. Update cat
+PUT {{apiUrl}}/cats/8
+
+### 5. Delete cat
+DELETE {{apiUrl}}/cats/8
+
+### -------------------------------------------
+
+### 6. Get all users
+GET {{apiUrl}}/users
+
+### 7. Get user by ID
+GET {{apiUrl}}/users/3609
+
+### 8. Add a new user
+POST {{apiUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Alice Smith",
+  "username": "alicesmith",
+  "email": "alice@metropolia.fi",
+  "role": "user",
+  "password": "securepassword"
+}
+
+### 9. Update user
+PUT {{apiUrl}}/users/3609
+
+### 10. Delete user
+DELETE {{apiUrl}}/users/3609
