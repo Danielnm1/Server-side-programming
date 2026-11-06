@@ -2,11 +2,13 @@
   "dependencies": {
     "dotenv": "^18.0.9",
     "express": "^5.3.0",
-    "multer": "^2.5.0"
+    "multer": "^2.5.0",
+    "node": "^27.0.0-alpha.0.0.0",
+    "nodeman": "^1.1.2"
   },
-  "name": "wsk-backend-example",
+  "name": "serverside-programming",
   "version": "1.0.0",
-  "description": "Teacher's examples",
+  "description": "Week 3 Express REST API Assignment 1",
   "main": "src/app.js",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
