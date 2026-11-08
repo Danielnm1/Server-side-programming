@@ -1,33 +1,71 @@
-import { listAllUsers, findUserById, addUser } from '../models/user-model.js';
+import {
+  listAllUsers,
+  findUserById,
+  addUser,
+  modifyUser,
+  removeUser,
+} from '../models/user-model.js';
 
-const getAllUsers = (req, res) => {
-  res.json(listAllUsers());
-};
-
-const getUserById = (req, res) => {
-  const user = findUserById(req.params.id);
-  if (user) {
-    res.json(user);
-  } else {
-    res.sendStatus(404);
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await listAllUsers();
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
-const postUser = (req, res) => {
-  const userId = addUser(req.body);
-  if (userId) {
-    res.status(201).json({ message: 'New user added.', user_id: userId });
-  } else {
-    res.sendStatus(400);
+const getUserById = async (req, res) => {
+  try {
+    const user = await findUserById(req.params.id);
+    if (user) {
+      res.json(user);
+    } else {
+      res.sendStatus(404);
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
-const putUser = (req, res) => {
-  res.json({ message: 'User item updated.' });
+const postUser = async (req, res) => {
+  try {
+    const result = await addUser(req.body);
+    if (result) {
+      res.status(201).json({ message: 'New user added.', user_id: result.user_id });
+    } else {
+      res.sendStatus(400);
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
-const deleteUser = (req, res) => {
-  res.json({ message: 'User item deleted.' });
+const putUser = async (req, res) => {
+  try {
+    const result = await modifyUser(req.params.id, req.body);
+    if (result) {
+      res.json({ message: 'User item updated.' });
+    } else {
+      res.sendStatus(404);
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  try {
+    // Calling removeUser executes the transaction-based deletion in the model
+    const result = await removeUser(req.params.id);
+    if (result) {
+      res.json({ message: 'User item deleted.' });
+    } else {
+      res.sendStatus(404);
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export { getAllUsers, getUserById, postUser, putUser, deleteUser };

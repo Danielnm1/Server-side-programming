@@ -4,25 +4,24 @@
 GET {{apiUrl}}/cats
 
 ### 2. Get cat by ID
-GET {{apiUrl}}/cats/8
+GET {{apiUrl}}/cats/1
 
-### 3. Add a new cat
-POST {{apiUrl}}/cats
+### 3. Get cats by owner ID (Assignment 5 Requirement 4)
+GET {{apiUrl}}/cats/owner/1
+
+### 4. Update a cat
+PUT {{apiUrl}}/cats/1
 Content-Type: application/json
 
 {
-  "cat_name": "Garfield",
-  "weight": 12,
-  "owner": "Jhon",
-  "filename": "garfield.jpg",
-  "birthdate": "2020-06-19"
+  "cat_name": "Frank Modified",
+  "weight": 6.0,
+  "owner": 1,
+  "birthdate": "2020-04-15"
 }
 
-### 4. Update cat
-PUT {{apiUrl}}/cats/8
-
-### 5. Delete cat
-DELETE {{apiUrl}}/cats/8
+### 5. Delete a cat
+DELETE {{apiUrl}}/cats/2
 
 ### -------------------------------------------
 
@@ -30,7 +29,7 @@ DELETE {{apiUrl}}/cats/8
 GET {{apiUrl}}/users
 
 ### 7. Get user by ID
-GET {{apiUrl}}/users/3609
+GET {{apiUrl}}/users/1
 
 ### 8. Add a new user
 POST {{apiUrl}}/users
@@ -44,13 +43,21 @@ Content-Type: application/json
   "password": "securepassword"
 }
 
-### 9. Update user
-PUT {{apiUrl}}/users/3609
+### 9. Update a user
+PUT {{apiUrl}}/users/1
+Content-Type: application/json
 
-### 10. Delete user
-DELETE {{apiUrl}}/users/3609
+{
+  "name": "John Updated",
+  "email": "john_updated@example.com"
+}
 
-### Upload a new cat with an image
+### 10. Delete a user
+DELETE {{apiUrl}}/users/2
+
+### -------------------------------------------
+
+### 11. Upload a new cat with an image (Multer multipart/form-data)
 POST {{apiUrl}}/cats
 Content-Type: multipart/form-data; boundary=MyBoundary
 
@@ -65,35 +72,7 @@ Content-Disposition: form-data; name="weight"
 --MyBoundary
 Content-Disposition: form-data; name="owner"
 
-3602
---MyBoundary
-Content-Disposition: form-data; name="birthdate"
-
-2023-10-08
---MyBoundary
-Content-Disposition: form-data; name="cat"; filename="dog.jpg"
-Content-Type: image/jpeg
-
-< ./dog.jpg
---MyBoundary--
-
-
-### Upload a new cat with an image
-POST http://127.0.0.1:3000/api/v1/cats
-Content-Type: multipart/form-data; boundary=MyBoundary
-
---MyBoundary
-Content-Disposition: form-data; name="cat_name"
-
-Misu
---MyBoundary
-Content-Disposition: form-data; name="weight"
-
-6
---MyBoundary
-Content-Disposition: form-data; name="owner"
-
-3602
+1
 --MyBoundary
 Content-Disposition: form-data; name="birthdate"
 
