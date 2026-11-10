@@ -1,109 +1,98 @@
-# api http test requests for VSCode
-@apiUrl = http://127.0.0.1:3000/api/v1
+### Variables
+@host = http://localhost:3000/api/v1
+# Paste your token here after logging in successfully
+@token =  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMSwibmFtZSI6IlZhbGlkYXRpb24gVGVzdGVyIiwidXNlcm5hbWUiOiJ2YWxpZFVzZXI5OSIsImVtYWlsIjoidGVzdHVzZXI5OUBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzk0MzQxNDkzLCJleHAiOjE3OTQ0Mjc4OTN9.Q8uyNMQ65rxZcH--xvlZs8IUmKy7TN2jCBuvzqvzSCs
 
-
-## 1. AUTHENTICATION & USER REGISTRATION
-
-### Register new user
-POST {{apiUrl}}/users
-Content-Type: application/json
-
-{
-    "name": "Mati",
-    "username": "mattia",
-    "email": "matti@example.coam",
-    "password": "salakala"
-}
-
-### User login (Extracts token into @name login)
+### Login to get a token
 # @name login
-POST {{apiUrl}}/auth/login
+POST {{host}}/auth/login
 Content-Type: application/json
 
 {
-    "username": "matti",
-    "password": "salakala"
+  "username": "validUser99",
+  "password": "securepassword123"
 }
 
-### Get my user info (Protected)
-GET {{apiUrl}}/auth/me
-Authorization: Bearer {{login.response.body.token}}
+### 1. Centralized Error Handling (404 & 500)
+################################################
 
-### Get my user info (FAIL: No Token)
-GET {{apiUrl}}/auth/me
+### Test 1.1: 404 Not Found (Invalid Endpoint)
+# Expected Response: 404 JSON error
+GET {{host}}/non-existent-route
 
-### Get my user info (FAIL: Invalid Token)
-GET {{apiUrl}}/auth/me
-Authorization: Bearer invalidtoken123
+### Test 1.2: 404 Not Found (Non-existent Cat ID)
+# Expected Response: 404 JSON error "Kissaa ei löytynyt"
+GET {{host}}/cats/999999
 
 
-## ==========================================
-## 2. CAT ENDPOINTS
-## ==========================================
 
-### Get all cats (Protected)
-GET {{apiUrl}}/cats
-Authorization: Bearer {{login.response.body.token}}
+################################################
+### 2. User Input Validation & Sanitization
+################################################
 
-### Get cat by id
-GET {{apiUrl}}/cats/1
+### Test 2.1: Invalid User Registration (Empty Body / Short Fields)
+# Expected Response: 400 Bad Request with field-specific messages
+POST {{host}}/users
+Content-Type: application/json
 
-### Get cat by id (FAIL: not found)
-GET {{apiUrl}}/cats/9999
+{
+  "username": "ab",
+  "email": "not-an-email",
+  "password": "123"
+}
 
-### Get cats by owner user ID
-GET {{apiUrl}}/cats/owner/1
+### Test 2.2: Valid User Registration (Ensure unique username & email)
+POST http://localhost:3000/api/v1/users
+Content-Type: application/json
 
-### Post cat WITH IMAGE (Protected)
-# @name postCat
-POST {{apiUrl}}/cats
-Content-Type: multipart/form-data; boundary=MyBoundary
-Authorization: Bearer {{login.response.body.token}}
+{
+  "name": "Validation Tester",
+  "username": "validUser99",
+  "email": "testuser99@example.com",
+  "password": "securepassword123"
+}
 
---MyBoundary
+
+################################################
+### 3. File Upload & Validation (POST /api/v1/cats)
+################################################
+
+### Test 3.1: Missing Image File
+# Expected Response: 400 Bad Request "Invalid or missing file"
+POST {{host}}/cats
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=CatBoundary
+
+--CatBoundary
 Content-Disposition: form-data; name="cat_name"
 
-Dogi
---MyBoundary
+Garfield
+--CatBoundary
 Content-Disposition: form-data; name="weight"
 
-4
---MyBoundary
+5.5
+--CatBoundary
 Content-Disposition: form-data; name="birthdate"
 
-2022-10-08
---MyBoundary
-Content-Disposition: form-data; name="image"; filename="dog.jpg"
-Content-Type: image/jpeg
+2020-01-01
+--CatBoundary--
 
-< ./dog.jpg
---MyBoundary--
+### Test 3.2: Invalid Input Fields for Cat Creation
+# Expected Response: 400 Bad Request (cat_name short, weight invalid, bad date format)
+POST {{host}}/cats
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=CatBoundary
 
-### Edit existing cat (Protected - Owner/Admin)
-PUT {{apiUrl}}/cats/1
-Content-Type: application/json
-Authorization: Bearer {{login.response.body.token}}
+--CatBoundary
+Content-Disposition: form-data; name="cat_name"
 
-{
-    "weight": 6,
-    "cat_name": "Uusi nimi"
-}
+Hi
+--CatBoundary
+Content-Disposition: form-data; name="weight"
 
-### Delete cat by id (Protected - Owner/Admin)
-DELETE {{apiUrl}}/cats/1
-Authorization: Bearer {{login.response.body.token}}
+-5
+--CatBoundary
+Content-Disposition: form-data; name="birthdate"
 
-
-### Edit your own cat
-PUT {{apiUrl}}/cats/5
-Content-Type: application/json
-Authorization: Bearer {{login.response.body.token}}
-
-{
-    "weight": 6,
-    "cat_name": "Uusi nimi"
-}
-
-### Delete your own cat
-DELETE {{apiUrl}}/cats/5
-Authorization: Bearer {{login.response.body.token}}
+not-a-date
+--CatBoundary--

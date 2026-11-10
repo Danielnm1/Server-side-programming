@@ -7,7 +7,7 @@ import {
   removeCat,
 } from '../models/cat-model.js';
 
-const getAllCats = async (req, res) => {
+const getAllCats = async (req, res, next) => {
   try {
     const cats = await listAllCats();
     res.json({
@@ -16,79 +16,90 @@ const getAllCats = async (req, res) => {
       data: cats,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
-const getCatById = async (req, res) => {
+const getCatById = async (req, res, next) => {
   try {
     const cat = await findCatById(req.params.id);
     if (!cat) {
-      return res.status(404).json({ message: 'Kissaa ei löytynyt' });
+      const error = new Error('Kissaa ei löytynyt');
+      error.status = 404;
+      return next(error);
     }
     res.json(cat);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
-const getCatsByUserId = async (req, res) => {
+const getCatsByUserId = async (req, res, next) => {
   try {
     const cats = await findCatByUserId(req.params.userId);
     res.json(cats);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
-const postCat = async (req, res) => {
+const postCat = async (req, res, next) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: 'Cat image file is required.' });
+      const error = new Error('Invalid or missing file');
+      error.status = 400;
+      return next(error);
     }
+
     req.body.filename = req.file.filename;
     req.body.owner = res.locals.user.user_id;
 
     const result = await addCat(req.body);
-    if (result) {
-      res.status(201).json({ message: 'New cat added.', result });
-    } else {
-      res.sendStatus(400);
+    if (!result) {
+      const error = new Error('Failed to add cat');
+      error.status = 400;
+      return next(error);
     }
+
+    res.status(201).json({ message: 'New cat added.', result });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
-const putCat = async (req, res) => {
+const putCat = async (req, res, next) => {
   try {
-    const id = Number(req.params.id);
+    const catId = Number(req.params.id);
     const user = res.locals.user;
 
-    const result = await modifyCat(id, req.body, user);
-    if (result) {
-      res.json({ message: 'Cat updated!' });
-    } else {
-      res.status(403).json({ error: 403, message: 'Forbidden or cat not found.' });
+    const result = await modifyCat(catId, req.body, user);
+    if (!result) {
+      const error = new Error('Forbidden or cat not found.');
+      error.status = 403;
+      return next(error);
     }
+
+    res.json({ message: 'Cat updated!' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
-const deleteCat = async (req, res) => {
+const deleteCat = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     const user = res.locals.user;
 
     const result = await removeCat(id, user);
-    if (result) {
-      res.json({ message: 'Cat removed!' });
-    } else {
-      res.status(403).json({ error: 403, message: 'Forbidden or cat not found.' });
+    if (!result) {
+      const error = new Error('Forbidden or cat not found.');
+      error.status = 403;
+      return next(error);
     }
+
+    res.json({ message: 'Cat removed!' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
