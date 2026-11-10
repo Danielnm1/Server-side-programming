@@ -1,7 +1,8 @@
+import bcrypt from 'bcrypt';
 import {
-  listAllUsers,
-  findUserById,
   addUser,
+  findUserById,
+  listAllUsers,
   modifyUser,
   removeUser,
 } from '../models/user-model.js';
@@ -18,11 +19,10 @@ const getAllUsers = async (req, res) => {
 const getUserById = async (req, res) => {
   try {
     const user = await findUserById(req.params.id);
-    if (user) {
-      res.json(user);
-    } else {
-      res.sendStatus(404);
+    if (!user) {
+      return res.status(404).json({ message: 'Käyttäjää ei löytynyt' });
     }
+    res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -30,9 +30,10 @@ const getUserById = async (req, res) => {
 
 const postUser = async (req, res) => {
   try {
+    req.body.password = await bcrypt.hash(req.body.password, 10);
     const result = await addUser(req.body);
     if (result) {
-      res.status(201).json({ message: 'New user added.', user_id: result.user_id });
+      res.status(201).json({ message: 'New user added.', result });
     } else {
       res.sendStatus(400);
     }
@@ -43,11 +44,22 @@ const postUser = async (req, res) => {
 
 const putUser = async (req, res) => {
   try {
-    const result = await modifyUser(req.params.id, req.body);
+    const targetUserId = Number(req.params.id);
+    const loggedInUser = res.locals.user;
+
+    if (loggedInUser.user_id !== targetUserId && loggedInUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    if (req.body.password) {
+      req.body.password = await bcrypt.hash(req.body.password, 10);
+    }
+
+    const result = await modifyUser(req.body, targetUserId);
     if (result) {
-      res.json({ message: 'User item updated.' });
+      res.json({ message: 'User updated successfully.' });
     } else {
-      res.sendStatus(404);
+      res.status(404).json({ message: 'User not found.' });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -56,12 +68,18 @@ const putUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   try {
-    // Calling removeUser executes the transaction-based deletion in the model
-    const result = await removeUser(req.params.id);
+    const targetUserId = Number(req.params.id);
+    const loggedInUser = res.locals.user;
+
+    if (loggedInUser.user_id !== targetUserId && loggedInUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const result = await removeUser(targetUserId);
     if (result) {
-      res.json({ message: 'User item deleted.' });
+      res.json({ message: 'User deleted successfully.' });
     } else {
-      res.sendStatus(404);
+      res.status(404).json({ message: 'User not found.' });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -1,24 +1,33 @@
 import express from 'express';
 import multer from 'multer';
-import { createThumbnail } from '../../middlewares/upload.js';
-
 import {
+  deleteCat,
   getAllCats,
   getCatById,
-  getCatsByOwner,
+  getCatsByUserId,
   postCat,
   putCat,
-  deleteCat,
 } from '../controllers/cat-controller.js';
+import { createThumbnail } from '../../middlewares/upload.js';
+import { authenticateToken } from '../../middlewares/authentication.js';
 
 const upload = multer({ dest: 'uploads/' });
 const catRouter = express.Router();
 
-catRouter.route('/').get(getAllCats).post(upload.single('cat'),createThumbnail,postCat);
+// GET all cats / POST new cat (Protected)
+catRouter
+  .route('/')
+  .get(getAllCats)
+  .post(authenticateToken, upload.single('image'), createThumbnail, postCat);
 
-// Requirement 4: Endpoint to fetch all cats belonging to a specific user/owner
-catRouter.route('/owner/:userId').get(getCatsByOwner);
+// GET cats by owner ID
+catRouter.route('/owner/:userId').get(getCatsByUserId);
 
-catRouter.route('/:id').get(getCatById).delete(deleteCat).put(putCat);
+// GET by ID / DELETE (Protected) / PUT (Protected)
+catRouter
+  .route('/:id')
+  .get(getCatById)
+  .delete(authenticateToken, deleteCat)
+  .put(authenticateToken, putCat);
 
 export default catRouter;

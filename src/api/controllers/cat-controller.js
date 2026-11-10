@@ -1,18 +1,20 @@
 import {
-  listAllCats,
+  addCat,
   findCatById,
   findCatByUserId,
-  addCat,
-  removeCat,
+  listAllCats,
   modifyCat,
+  removeCat,
 } from '../models/cat-model.js';
 
-// 1. Mark controller function as `async`
 const getAllCats = async (req, res) => {
   try {
-    // 2. Use `await` to get rows from MySQL
     const cats = await listAllCats();
-    res.json(cats);
+    res.json({
+      message: 'Tässä kissat',
+      time: req.requestTime,
+      data: cats,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -21,18 +23,16 @@ const getAllCats = async (req, res) => {
 const getCatById = async (req, res) => {
   try {
     const cat = await findCatById(req.params.id);
-    if (cat) {
-      res.json(cat);
-    } else {
-      res.sendStatus(404);
+    if (!cat) {
+      return res.status(404).json({ message: 'Kissaa ei löytynyt' });
     }
+    res.json(cat);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// New function required by Assignment 5 (Get cats by owner/user ID)
-const getCatsByOwner = async (req, res) => {
+const getCatsByUserId = async (req, res) => {
   try {
     const cats = await findCatByUserId(req.params.userId);
     res.json(cats);
@@ -43,20 +43,15 @@ const getCatsByOwner = async (req, res) => {
 
 const postCat = async (req, res) => {
   try {
-    console.log('Form body:', req.body);
-    console.log('Uploaded file:', req.file);
+    if (!req.file) {
+      return res.status(400).json({ message: 'Cat image file is required.' });
+    }
+    req.body.filename = req.file.filename;
+    req.body.owner = res.locals.user.user_id;
 
-    const catData = {
-      cat_name: req.body.cat_name,
-      weight: req.body.weight,
-      owner: req.body.owner,
-      birthdate: req.body.birthdate,
-      filename: req.file ? req.file.filename : null,
-    };
-
-    const result = await addCat(catData);
+    const result = await addCat(req.body);
     if (result) {
-      res.status(201).json({ message: 'New cat added.', cat_id: result.cat_id });
+      res.status(201).json({ message: 'New cat added.', result });
     } else {
       res.sendStatus(400);
     }
@@ -67,11 +62,14 @@ const postCat = async (req, res) => {
 
 const putCat = async (req, res) => {
   try {
-    const result = await modifyCat(req.params.id, req.body);
+    const id = Number(req.params.id);
+    const user = res.locals.user;
+
+    const result = await modifyCat(id, req.body, user);
     if (result) {
-      res.json({ message: 'Cat item updated.' });
+      res.json({ message: 'Cat updated!' });
     } else {
-      res.sendStatus(404);
+      res.status(403).json({ error: 403, message: 'Forbidden or cat not found.' });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -80,15 +78,18 @@ const putCat = async (req, res) => {
 
 const deleteCat = async (req, res) => {
   try {
-    const result = await removeCat(req.params.id);
+    const id = Number(req.params.id);
+    const user = res.locals.user;
+
+    const result = await removeCat(id, user);
     if (result) {
-      res.json({ message: 'Cat item deleted.' });
+      res.json({ message: 'Cat removed!' });
     } else {
-      res.sendStatus(404);
+      res.status(403).json({ error: 403, message: 'Forbidden or cat not found.' });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-export { getAllCats, getCatById, getCatsByOwner, postCat, putCat, deleteCat };
+export { getAllCats, getCatById, getCatsByUserId, postCat, putCat, deleteCat };

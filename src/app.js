@@ -1,12 +1,18 @@
 import express from 'express';
-import router from './api/index.js';;
+import cors from 'cors';
+import router from './api/index.js';
+import requestTime from './middlewares/request-time.js';
 
 const app = express();
+
+app.use(cors());
 app.use(express.static('public'));
+app.use('/uploads', express.static('uploads'));
+
+app.use(requestTime);
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Direct all /api/v1 requests to the API router (src/api/index.js)
-
-app.use('/api/v1',router);
+app.use('/api/v1', router);
 
 export default app;

@@ -1,85 +1,109 @@
+# api http test requests for VSCode
 @apiUrl = http://127.0.0.1:3000/api/v1
 
-### 1. Get all cats
-GET {{apiUrl}}/cats
 
-### 2. Get cat by ID
-GET {{apiUrl}}/cats/1
+## 1. AUTHENTICATION & USER REGISTRATION
 
-### 3. Get cats by owner ID (Assignment 5 Requirement 4)
-GET {{apiUrl}}/cats/owner/1
-
-### 4. Update a cat
-PUT {{apiUrl}}/cats/1
-Content-Type: application/json
-
-{
-  "cat_name": "Frank Modified",
-  "weight": 6.0,
-  "owner": 1,
-  "birthdate": "2020-04-15"
-}
-
-### 5. Delete a cat
-DELETE {{apiUrl}}/cats/2
-
-### -------------------------------------------
-
-### 6. Get all users
-GET {{apiUrl}}/users
-
-### 7. Get user by ID
-GET {{apiUrl}}/users/1
-
-### 8. Add a new user
+### Register new user
 POST {{apiUrl}}/users
 Content-Type: application/json
 
 {
-  "name": "Alice Smith",
-  "username": "alicesmith",
-  "email": "alice@metropolia.fi",
-  "role": "user",
-  "password": "securepassword"
+    "name": "Mati",
+    "username": "mattia",
+    "email": "matti@example.coam",
+    "password": "salakala"
 }
 
-### 9. Update a user
-PUT {{apiUrl}}/users/1
+### User login (Extracts token into @name login)
+# @name login
+POST {{apiUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "name": "John Updated",
-  "email": "john_updated@example.com"
+    "username": "matti",
+    "password": "salakala"
 }
 
-### 10. Delete a user
-DELETE {{apiUrl}}/users/2
+### Get my user info (Protected)
+GET {{apiUrl}}/auth/me
+Authorization: Bearer {{login.response.body.token}}
 
-### -------------------------------------------
+### Get my user info (FAIL: No Token)
+GET {{apiUrl}}/auth/me
 
-### 11. Upload a new cat with an image (Multer multipart/form-data)
+### Get my user info (FAIL: Invalid Token)
+GET {{apiUrl}}/auth/me
+Authorization: Bearer invalidtoken123
+
+
+## ==========================================
+## 2. CAT ENDPOINTS
+## ==========================================
+
+### Get all cats (Protected)
+GET {{apiUrl}}/cats
+Authorization: Bearer {{login.response.body.token}}
+
+### Get cat by id
+GET {{apiUrl}}/cats/1
+
+### Get cat by id (FAIL: not found)
+GET {{apiUrl}}/cats/9999
+
+### Get cats by owner user ID
+GET {{apiUrl}}/cats/owner/1
+
+### Post cat WITH IMAGE (Protected)
+# @name postCat
 POST {{apiUrl}}/cats
 Content-Type: multipart/form-data; boundary=MyBoundary
+Authorization: Bearer {{login.response.body.token}}
 
 --MyBoundary
 Content-Disposition: form-data; name="cat_name"
 
-Misu
+Dogi
 --MyBoundary
 Content-Disposition: form-data; name="weight"
 
-6
---MyBoundary
-Content-Disposition: form-data; name="owner"
-
-1
+4
 --MyBoundary
 Content-Disposition: form-data; name="birthdate"
 
-2023-10-08
+2022-10-08
 --MyBoundary
-Content-Disposition: form-data; name="cat"; filename="dog.jpg"
+Content-Disposition: form-data; name="image"; filename="dog.jpg"
 Content-Type: image/jpeg
 
 < ./dog.jpg
 --MyBoundary--
+
+### Edit existing cat (Protected - Owner/Admin)
+PUT {{apiUrl}}/cats/1
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+    "weight": 6,
+    "cat_name": "Uusi nimi"
+}
+
+### Delete cat by id (Protected - Owner/Admin)
+DELETE {{apiUrl}}/cats/1
+Authorization: Bearer {{login.response.body.token}}
+
+
+### Edit your own cat
+PUT {{apiUrl}}/cats/5
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+    "weight": 6,
+    "cat_name": "Uusi nimi"
+}
+
+### Delete your own cat
+DELETE {{apiUrl}}/cats/5
+Authorization: Bearer {{login.response.body.token}}
